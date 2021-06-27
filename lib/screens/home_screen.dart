@@ -12,6 +12,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final myController = TextEditingController();
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
+  final scaffoldKey = GlobalKey<ScaffoldState>();
+  Color textColor = Colors.red;
 
   @override
   void dispose() {
@@ -26,12 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<String> joinRoom(String roomCode) async {
-    QuerySnapshot gamesData = await firestoreAdapter.getCollection("games");
-    for (int i = 0; i < gamesData.docs.length; i++) {
-      if (gamesData.docs[i].id == roomCode) {
-        return addPlayerToRoom(roomCode);
-      }
-    }
     return addPlayerToRoom(roomCode);
   }
 
@@ -43,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           SizedBox(height: screenSize.height * 0.05, width: screenSize.width),
           Text(
-            "DICE",
+            "Dice",
             style: TextStyle(fontSize: 48),
           ),
           Container(
@@ -54,25 +50,59 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(fontSize: 36),
           ),
           Container(
-              width: screenSize.width * 0.8,
+              width: screenSize.width * 0.5,
               child: TextField(
-                style: TextStyle(fontSize: 36),
+                style: TextStyle(fontSize: 28),
+                onChanged: (text) {
+                  if (text.length == 4) {
+                    setState(() {
+                      textColor = Colors.green;
+                    });
+                  } else {
+                    setState(() {
+                      textColor = Colors.red;
+                    });
+                  }
+                },
+                decoration: InputDecoration(
+                    focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: textColor),
+                )),
                 keyboardType: TextInputType.number,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 controller: myController,
               )),
           SizedBox(
-            height: screenSize.height * 0.05,
+            height: screenSize.height * 0.04,
           ),
-          TextButton(
+          ElevatedButton(
+              style: ButtonStyle(
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(Colors.deepOrangeAccent),
+                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                    EdgeInsets.fromLTRB(
+                        screenSize.width * 0.07,
+                        screenSize.height * 0.015,
+                        screenSize.width * 0.07,
+                        screenSize.height * 0.015),
+                  )),
               child: Text(
-                "Join Room",
-                style: TextStyle(fontSize: 36),
+                "Join",
+                style: TextStyle(fontSize: 36, color: Colors.white),
               ),
               onPressed: () async {
-                if (myController.text.length != 4)
-                {
-                  
+                if (myController.text.length != 4) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        "Room code should be 4 digits!",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      duration: Duration(seconds: 2),
+                      backgroundColor: Colors.black,
+                    ),
+                  );
+                  return;
                 }
                 String userId = await joinRoom(myController.text);
                 Navigator.push(context,

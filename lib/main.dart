@@ -3,6 +3,7 @@ import 'package:dice/screens/home_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 
@@ -52,7 +53,7 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.light,
         /* light theme settings */
       ),
-      darkTheme: ThemeData(brightness: Brightness.dark, fontFamily: 'Frighter'
+      darkTheme: ThemeData(brightness: Brightness.dark, fontFamily: 'Roboto'
           /* dark theme settings */
           ),
       themeMode: ThemeMode.dark,
