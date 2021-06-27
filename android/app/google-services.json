@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "972142902333",
+    "project_id": "dice-koren",
+    "storage_bucket": "dice-koren.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:972142902333:android:621baaec89d360c9e13e54",
+        "android_client_info": {
+          "package_name": "com.example.dice"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "972142902333-fgjd507ucrtb03knoasf6ethbhu47jg5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1cVxzCU_yrgeGQ7ozEkospAzLfWVzJ8s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "972142902333-fgjd507ucrtb03knoasf6ethbhu47jg5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
