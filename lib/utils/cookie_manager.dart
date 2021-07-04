@@ -8,7 +8,8 @@ class CookieManager {
 
   static String getCookie(String key) {
     String cookies = document.cookie;
-    List<String> listValues = cookies.isNotEmpty ? cookies.split(";") : List();
+    List<String> listValues =
+        cookies.isNotEmpty ? cookies.split(";") : List.empty();
     String matchVal = "";
     for (int i = 0; i < listValues.length; i++) {
       List<String> map = listValues[i].split("=");
