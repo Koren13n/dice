@@ -1,8 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dice/screens/join_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:dice/utils/firestore_adapter.dart';
-import 'package:dice/screens/room_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -10,105 +7,77 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final myController = TextEditingController();
-  FirestoreAdapter firestoreAdapter = FirestoreAdapter();
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-  Color textColor = Colors.red;
-
-  @override
-  void dispose() {
-    myController.dispose();
-    super.dispose();
-  }
-
-  Future<String> addPlayerToRoom(String roomCode) async {
-    DocumentReference playerDoc = await firestoreAdapter
-        .addDocument("games/" + roomCode + "/players", {"name": "Koren"});
-    return playerDoc.id;
-  }
-
-  Future<String> joinRoom(String roomCode) async {
-    return addPlayerToRoom(roomCode);
-  }
-
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
-      body: Column(
-        children: [
-          SizedBox(height: screenSize.height * 0.05, width: screenSize.width),
-          Text(
-            "Dice",
-            style: TextStyle(fontSize: 48),
-          ),
-          Container(
-              height: screenSize.height * 0.5,
-              child: Image.asset("assets/photos/dice2.png")),
-          Text(
-            "Room code",
-            style: TextStyle(fontSize: 36),
-          ),
-          Container(
-              width: screenSize.width * 0.5,
-              child: TextField(
-                style: TextStyle(fontSize: 28),
-                onChanged: (text) {
-                  if (text.length == 4) {
-                    setState(() {
-                      textColor = Colors.green;
-                    });
-                  } else {
-                    setState(() {
-                      textColor = Colors.red;
-                    });
-                  }
+      appBar: AppBar(
+        title: Center(child: Text("Dice")),
+        backgroundColor: Colors.purple[700],
+        shadowColor: Colors.purple[900],
+      ),
+      body: Center(
+        child: Column(
+          children: [
+            SizedBox(
+              height: screenSize.height * 0.05,
+            ),
+            // Container(
+            //   width: screenSize.width * 0.9,
+            //   child: Text(
+            //     "A fun game to play with friends!",
+            //     style: TextStyle(fontSize: 26),
+            //     textAlign: TextAlign.center,
+            //   ),
+            // ),
+            Expanded(
+              child: SizedBox(),
+            ),
+            Container(
+              height: screenSize.height * 0.1,
+              width: screenSize.width * 0.3,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => JoinScreen()));
                 },
-                decoration: InputDecoration(
-                    focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: textColor),
-                )),
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                controller: myController,
-              )),
-          SizedBox(
-            height: screenSize.height * 0.04,
-          ),
-          ElevatedButton(
-              style: ButtonStyle(
+                child: Text(
+                  "New Game",
+                  style: TextStyle(fontSize: 36),
+                ),
+                style: ButtonStyle(
                   backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.deepOrangeAccent),
-                  padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-                    EdgeInsets.fromLTRB(
-                        screenSize.width * 0.07,
-                        screenSize.height * 0.015,
-                        screenSize.width * 0.07,
-                        screenSize.height * 0.015),
-                  )),
-              child: Text(
-                "Join",
-                style: TextStyle(fontSize: 36, color: Colors.white),
+                      MaterialStateProperty.all<Color>(Colors.purple[500]),
+                ),
               ),
-              onPressed: () async {
-                if (myController.text.length != 4) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        "Room code should be 4 digits!",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      duration: Duration(seconds: 2),
-                      backgroundColor: Colors.black,
-                    ),
-                  );
-                  return;
-                }
-                String userId = await joinRoom(myController.text);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => RoomScreen()));
-              })
-        ],
+            ),
+            SizedBox(
+              height: screenSize.height * 0.02,
+            ),
+            Container(
+              height: screenSize.height * 0.1,
+              width: screenSize.width * 0.3,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => JoinScreen()));
+                },
+                child: Text(
+                  "Join Game",
+                  style: TextStyle(fontSize: 36),
+                ),
+                style: ButtonStyle(
+                  backgroundColor:
+                      MaterialStateProperty.all<Color>(Colors.purple[500]),
+                ),
+              ),
+            ),
+            SizedBox(
+              height: screenSize.height * 0.02,
+            )
+          ],
+        ),
       ),
     );
   }
