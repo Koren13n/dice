@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dice/utils/cookie_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:dice/utils/firestore_adapter.dart';
@@ -22,9 +23,10 @@ class _JoinScreenState extends State<JoinScreen> {
   }
 
   Future<String> addPlayerToRoom(String roomCode) async {
-    DocumentReference playerDoc = await firestoreAdapter
-        .addDocument("games/" + roomCode + "/players", {"name": "Koren"});
-    return playerDoc.id;
+    String name = CookieManager.getCookie("name");
+    await firestoreAdapter.updateDocument(
+        "games/$roomCode/players/", name, {"name": name, "isAdmin": false});
+    return name;
   }
 
   Future<String> joinRoom(String roomCode) async {
@@ -102,8 +104,10 @@ class _JoinScreenState extends State<JoinScreen> {
                   return;
                 }
                 String userId = await joinRoom(myController.text);
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => RoomScreen()));
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => RoomScreen(myController.text)));
               }),
           Container(
               height: screenSize.height * 0.5,
