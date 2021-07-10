@@ -14,64 +14,107 @@ class RoomScreen extends StatefulWidget {
 class _RoomScreenState extends State<RoomScreen> {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
   final FirestoreLineFetcher firestoreLineFetcher = FirestoreLineFetcher();
-  List<Map<String, dynamic>> names = [];
-  List<Text> textWidgets = [];
+  Map<String, dynamic> names;
+  List<Widget> textWidgets = [];
 
-  Future<QuerySnapshot> getRoomPlayers(String roomCode) async {
-    QuerySnapshot players =
-        await firestoreAdapter.getCollection("games/$roomCode/players");
-    return players;
+  void leaveRoom(String roomCode, String name) async {
+    FirebaseFirestore.instance
+        .collection("games/$roomCode/players")
+        .doc(name)
+        .delete();
+    Navigator.pop(context);
   }
 
   bool isAdmin = true;
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
+    double buttonsWidth = (screenSize.width > screenSize.height) ? 0.3 : 0.9;
+
     String name = CookieManager.getCookie("name");
     final String roomCode = this.widget.roomCode;
 
     return Scaffold(
         body: Center(
       child: Column(children: [
-        Text(
-          "Hi $name, You are in room $roomCode",
-          style: TextStyle(fontSize: 36),
+        SizedBox(
+          height: screenSize.height * 0.05,
         ),
-        StreamBuilder(
-            stream: firestoreLineFetcher
-                .getPlayersStreamFromFirestore(this.widget.roomCode),
-            builder: (context, snapshot) {
-              names = snapshot?.data ?? [];
-              textWidgets = [];
-              for (int i = 0; i < names.length; i++) {
-                textWidgets.add(Text(names[i]["name"]));
-                if (names.length != 1) {
-                  isAdmin = false;
+        Container(
+          width: screenSize.width * 0.9,
+          child: Text("Hi $name, You are in room $roomCode",
+              style: TextStyle(fontSize: 32), textAlign: TextAlign.center),
+        ),
+        SizedBox(
+          height: screenSize.height * 0.03,
+        ),
+        Container(
+          height: screenSize.height * 0.5,
+          child: StreamBuilder(
+              stream: firestoreLineFetcher
+                  .getPlayersStreamFromFirestore(this.widget.roomCode),
+              builder: (context, snapshot) {
+                names = snapshot?.data ?? [];
+                textWidgets = [];
+                print(names["players"].length);
+                print(names["players"]);
+                print(isAdmin);
+                for (int i = 0; i < names["players"].length; i++) {
+                  textWidgets.add(Text(
+                    names["players"][i]["name"],
+                    style: TextStyle(fontSize: 26),
+                  ));
+                  textWidgets.add(SizedBox(height: screenSize.height * 0.005));
+                  if (names["players"].length != 1) {
+                    isAdmin = false;
+                  }
+                  if (names["players"][i]["name"] == name) {
+                    isAdmin = names["players"][i]["isAdmin"];
+                  }
                 }
-                if (names[i]["name"] == name) {
-                  isAdmin = names[i]["isAdmin"];
-                }
-              }
 
-              print(names.length);
-              print(names);
-              print(isAdmin);
-              return Column(children: textWidgets);
-            }),
+                return Column(children: textWidgets);
+              }),
+        ),
         Expanded(child: SizedBox()),
         isAdmin
-            ? ElevatedButton(
-                onPressed: () => print("Hi"),
-                child: Text(
-                  "Start Game",
-                  style: TextStyle(fontSize: 36),
-                ),
-                style: ButtonStyle(
-                  backgroundColor:
-                      MaterialStateProperty.all<Color>(Colors.purple[500]),
+            ? Container(
+                height: screenSize.height * 0.1,
+                width: screenSize.width * buttonsWidth,
+                child: ElevatedButton(
+                  onPressed: () => print("Hi"),
+                  child: Text(
+                    "Start Game",
+                    style: TextStyle(fontSize: 36),
+                  ),
+                  style: ButtonStyle(
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Colors.purple[500]),
+                  ),
                 ),
               )
-            : Text("Not Admin")
+            : Text("Not Admin"),
+        SizedBox(
+          height: screenSize.height * 0.02,
+        ),
+        Container(
+          height: screenSize.height * 0.1,
+          width: screenSize.width * buttonsWidth,
+          child: ElevatedButton(
+            onPressed: () => leaveRoom(roomCode, name),
+            child: Text(
+              "Leave Room",
+              style: TextStyle(fontSize: 36),
+            ),
+            style: ButtonStyle(
+              backgroundColor:
+                  MaterialStateProperty.all<Color>(Colors.purple[500]),
+            ),
+          ),
+        ),
+        SizedBox(
+          height: screenSize.height * 0.02,
+        )
       ]),
     ));
   }

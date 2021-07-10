@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dice/utils/firestore_adapter.dart';
+import 'package:flutter/material.dart';
 
 class FirestoreLineFetcher {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
 
-  Stream<List<Map<String, dynamic>>> getPlayersStreamFromFirestore(
-      String roomCode) {
+  Stream<Map<String, dynamic>> getPlayersStreamFromFirestore(String roomCode) {
     return firestoreAdapter
         .getCollectionStream("games/$roomCode/players")
         .map((snapshot) {
@@ -18,7 +18,12 @@ class FirestoreLineFetcher {
         });
       }
 
-      return names;
+      Map<String, dynamic> roomData = {
+        "metadata": {"gameStarted": false},
+        "players": names
+      };
+
+      return roomData;
     });
   }
 }

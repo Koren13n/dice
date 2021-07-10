@@ -5,9 +5,10 @@ import 'package:dice/utils/cookie_manager.dart';
 import 'package:dice/screens/name_screen.dart';
 import 'package:dice/screens/join_screen.dart';
 import 'package:dice/utils/app_bar.dart';
-import 'package:dice/screens/game_room.dart';
+import 'package:dice/screens/room_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dice/utils/firestore_adapter.dart';
+import 'package:dice/utils/firestore_room_manager.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -17,6 +18,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
   Random random = Random();
+  RoomManager roomManager = RoomManager();
 
   Future<String> getName(BuildContext context) async {
     String name = CookieManager.getCookie("name");
@@ -30,25 +32,38 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> joinRoom(BuildContext context) async {
     await getName(context);
-    print("Joining room");
     Navigator.push(
         context, MaterialPageRoute(builder: (context) => JoinScreen()));
   }
 
   Future<void> createRoom(BuildContext context) async {
     String name = await getName(context);
-    int roomCodeNumber = random.nextInt(10000);
-    String roomCode = roomCodeNumber.toString().padLeft(4, '0');
-    await firestoreAdapter.addDocument(
-        "games/$roomCode/players", {"name": name, "isAdmin": true});
-    Navigator.push(
+    String roomCode = await roomManager.createRoom(name);
+    await Navigator.push(
         context, MaterialPageRoute(builder: (context) => RoomScreen(roomCode)));
+  }
+
+  Future<void> putPlayerInRoom(String roomCode) async {
+    if (!await roomManager.docExists("games", roomCode)) {
+      return;
+    }
+
+    if (!(await roomManager.getRoomData(roomCode))["gameStarted"]) {
+      Navigator.push(context,
+          MaterialPageRoute(builder: (context) => RoomScreen(roomCode)));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
     double buttonsWidth = (screenSize.width > screenSize.height) ? 0.3 : 0.9;
+
+    // Maybe in the future
+    // String room = CookieManager.getCookie("room");
+    // if (room.length == 4) {
+    //   putPlayerInRoom(room);
+    // }
 
     return Scaffold(
       appBar: DiceAppBar(),
