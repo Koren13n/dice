@@ -4,13 +4,14 @@ import 'package:dice/utils/cookie_manager.dart';
 import 'package:dice/utils/app_bar.dart';
 
 class NameScreen extends StatefulWidget {
+  static const String route = "/name";
+
   @override
   State<NameScreen> createState() => _NameScreenState();
 }
 
 class _NameScreenState extends State<NameScreen> {
   final myController = TextEditingController();
-  Color lineColor = Colors.red;
 
   void saveUserName(BuildContext context, String username) {
     CookieManager.addToCookie("name", username);
@@ -47,23 +48,7 @@ class _NameScreenState extends State<NameScreen> {
                 style: TextStyle(fontSize: 28),
                 enabled: true,
                 autofocus: true,
-                onChanged: (text) {
-                  print(text);
-                  if (text.length >= 4) {
-                    setState(() {
-                      lineColor = Colors.green;
-                    });
-                  } else {
-                    setState(() {
-                      lineColor = Colors.red;
-                    });
-                  }
-                },
                 keyboardType: TextInputType.name,
-                decoration: InputDecoration(
-                    focusedBorder: UnderlineInputBorder(
-                  borderSide: BorderSide(color: lineColor),
-                )),
                 controller: myController,
               ),
             ),
@@ -73,7 +58,7 @@ class _NameScreenState extends State<NameScreen> {
               width: screenSize.width * buttonsWidth,
               child: ElevatedButton(
                 onPressed: () {
-                  if (myController.text.length < 4) {
+                  if (myController.text.length == 0) {
                     return;
                   }
                   CookieManager.addToCookie("name", myController.text);

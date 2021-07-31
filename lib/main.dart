@@ -1,5 +1,9 @@
+import 'package:dice/screens/game_room.dart';
 import 'package:flutter/material.dart';
 import 'package:dice/screens/home_screen.dart';
+import 'package:dice/screens/join_screen.dart';
+import 'package:dice/screens/name_screen.dart';
+import 'package:dice/screens/room_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 void main() {
@@ -48,7 +52,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'App Title',
+      title: 'Dice',
       theme: ThemeData(
         brightness: Brightness.light,
         /* light theme settings */
@@ -62,7 +66,46 @@ class MyApp extends StatelessWidget {
          ThemeMode.dark for dark theme
       */
       debugShowCheckedModeBanner: false,
-      home: FirebaseLoginWrapper(),
+      // home: FirebaseLoginWrapper(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => FirebaseLoginWrapper(),
+        HomeScreen.route: (context) => HomeScreen(),
+        NameScreen.route: (context) => NameScreen(),
+        JoinScreen.route: (context) => JoinScreen(),
+        RoomScreen.route: (context) => RoomScreen((ModalRoute.of(context)
+            .settings
+            .arguments as Map<String, dynamic>)["room_code"]),
+        GameRoom.route: (context) => GameRoom()
+      },
+      onGenerateRoute: (settings) {
+        print(settings.name);
+        final settingsUri = Uri.parse(settings.name);
+
+        print(settingsUri);
+        if (settingsUri.pathSegments.length == 0) {
+          return MaterialPageRoute(builder: (context) => HomeScreen());
+        }
+
+        switch ("/" + settingsUri.pathSegments[0]) {
+          case HomeScreen.route:
+            return MaterialPageRoute(builder: (context) => HomeScreen());
+          case NameScreen.route:
+            return MaterialPageRoute(builder: (context) => NameScreen());
+          case JoinScreen.route:
+            return MaterialPageRoute(builder: (context) => JoinScreen());
+          case RoomScreen.route:
+            try {
+              return MaterialPageRoute(
+                  builder: (context) =>
+                      RoomScreen(settingsUri.pathSegments[1]));
+            } on RangeError {
+              return MaterialPageRoute(builder: (context) => HomeScreen());
+            }
+        }
+
+        return MaterialPageRoute(builder: (context) => HomeScreen());
+      },
     );
   }
 }

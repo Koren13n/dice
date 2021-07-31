@@ -1,27 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dice/utils/firestore_adapter.dart';
+import 'package:dice/utils/player.dart';
 import 'package:flutter/material.dart';
 
-class FirestoreLineFetcher {
+class FirestorePlayersFetcher {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
 
   Stream<Map<String, dynamic>> getPlayersStreamFromFirestore(String roomCode) {
     return firestoreAdapter
         .getCollectionStream("games/$roomCode/players")
         .map((snapshot) {
-      List<Map<String, dynamic>> names = [];
+      List<Player> players = [];
 
       for (DocumentSnapshot document in snapshot?.docs ?? []) {
-        names.add({
-          "name": document.data()["name"],
-          "isAdmin": document.data()["isAdmin"]
-        });
+        players.add(Player.fromJson(document.data()));
       }
 
-      Map<String, dynamic> roomData = {
-        "metadata": {"gameStarted": false},
-        "players": names
-      };
+      Map<String, dynamic> roomData = {"players": players};
 
       return roomData;
     });

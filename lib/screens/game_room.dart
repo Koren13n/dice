@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:dice/utils/app_bar.dart';
 import 'package:dice/utils/cookie_manager.dart';
 
-class GameRoomScreen extends StatefulWidget {
+class GameRoom extends StatefulWidget {
+  static const String route = "/game";
+
   @override
-  _GameRoomScreenState createState() => _GameRoomScreenState();
+  _GameRoomState createState() => _GameRoomState();
 }
 
-class _GameRoomScreenState extends State<GameRoomScreen> {
+class _GameRoomState extends State<GameRoom> {
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
 
     return Scaffold(
-      appBar: DiceAppBar(),
       body: Center(
         child: Column(
           children: [

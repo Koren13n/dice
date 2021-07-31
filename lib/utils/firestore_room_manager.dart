@@ -2,27 +2,36 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dice/utils/firestore_adapter.dart';
 import 'package:dice/utils/cookie_manager.dart';
+import 'package:dice/utils/game.dart';
+import 'package:dice/utils/player.dart';
+
+enum AddPlayerResult { Success, RoomDoesntExist, PlayerAlreadyInRoom }
 
 class RoomManager {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
   Random random = Random();
+  static final RoomManager _singleton = RoomManager._();
+
+  static RoomManager get instance => _singleton;
+
+  RoomManager._();
 
   Future<bool> docExists(String collection, String docId) async {
-    try {
-      // Get reference to Firestore collection
-      var collectionRef = FirebaseFirestore.instance.collection(collection);
+    // Get reference to Firestore collection
+    var collectionRef = FirebaseFirestore.instance.collection(collection);
 
-      var doc = await collectionRef.doc(docId).get();
-      return doc.exists;
-    } catch (e) {
-      throw e;
-    }
+    var doc = await collectionRef.doc(docId).get();
+    return doc.exists;
   }
 
-  Future<List<QueryDocumentSnapshot>> getRoomPlayers(String roomCode) async {
+  Future<List<Player>> getRoomPlayers(String roomCode) async {
+    List<Player> players = [];
     QuerySnapshot query =
         await firestoreAdapter.getCollection("games/$roomCode/players");
-    return query.docs;
+    for (var player in query.docs) {
+      players.add(Player.fromJson(player.data()));
+    }
+    return players;
   }
 
   Future<Map<String, dynamic>> getRoomData(String roomCode) async {
@@ -39,8 +48,8 @@ class RoomManager {
       roomCode = roomCodeNumber.toString().padLeft(4, '0');
     } while (await docExists("games", roomCode));
 
-    await firestoreAdapter
-        .updateDocument("games", roomCode, {"gameStarted": false});
+    await firestoreAdapter.updateDocument(
+        "games", roomCode, Game(gameStarted: false).toJson());
     await addPlayerToRoom(roomCode, playerName, isAdmin: true);
     return roomCode;
   }
@@ -50,15 +59,22 @@ class RoomManager {
         "games", roomCode, {"gameStarted": true, "diceCount": diceCount});
   }
 
-  Future<bool> addPlayerToRoom(String roomCode, String playerName,
+  Future<AddPlayerResult> addPlayerToRoom(String roomCode, String playerName,
       {bool isAdmin = false}) async {
     if (!await docExists("games", roomCode)) {
-      return false;
+      return AddPlayerResult.RoomDoesntExist;
     }
+    List<Player> players = await getRoomPlayers(roomCode);
+    for (var player in players) {
+      if (player.name == playerName) {
+        return AddPlayerResult.PlayerAlreadyInRoom;
+      }
+    }
+
     await firestoreAdapter.updateDocument("games/$roomCode/players", playerName,
         {"name": playerName, "isAdmin": isAdmin});
     CookieManager.addToCookie("room", roomCode);
-    return true;
+    return AddPlayerResult.Success;
   }
 
   Future<bool> removePlayerFromRoom(String roomCode, String playerName) async {

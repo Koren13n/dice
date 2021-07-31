@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Phone",
+        "request": "launch",
+        "type": "dart",
+        "deviceId": "chrome"
+      },
+      {
+        "name": "Tablet",
+        "request": "launch",
+        "type": "dart",
+        "deviceId": "chrome"
+      }
+    ],
+    "compounds": [
+      {
+        "name": "All Devices",
+        "configurations": ["Phone", "Tablet"]
+      }
+    ]
+  }

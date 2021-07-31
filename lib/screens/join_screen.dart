@@ -8,6 +8,8 @@ import 'package:dice/screens/room_screen.dart';
 import 'package:dice/utils/firestore_room_manager.dart';
 
 class JoinScreen extends StatefulWidget {
+  static const String route = "/join";
+
   @override
   _JoinScreenState createState() => _JoinScreenState();
 }
@@ -17,7 +19,6 @@ class _JoinScreenState extends State<JoinScreen> {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
   final scaffoldKey = GlobalKey<ScaffoldState>();
   Color textColor = Colors.red;
-  RoomManager roomManager = RoomManager();
   String name = CookieManager.getCookie("name");
 
   @override
@@ -32,8 +33,39 @@ class _JoinScreenState extends State<JoinScreen> {
     return name;
   }
 
-  Future<bool> joinRoom(String roomCode) async {
-    return await roomManager.addPlayerToRoom(roomCode, name);
+  Future<void> joinRoom(String roomCode) async {
+    switch (await RoomManager.instance.addPlayerToRoom(roomCode, name)) {
+      case AddPlayerResult.RoomDoesntExist:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Room doesn't exist!",
+              style: TextStyle(color: Colors.white),
+            ),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.black,
+          ),
+        );
+        return;
+
+      case AddPlayerResult.PlayerAlreadyInRoom:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "A player with the same name as yours is already in the room.",
+              style: TextStyle(color: Colors.white),
+            ),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.black,
+          ),
+        );
+        return;
+
+      case AddPlayerResult.Success:
+        await Navigator.push(context,
+            MaterialPageRoute(builder: (context) => RoomScreen(roomCode)));
+        Navigator.pop(context);
+    }
   }
 
   @override
@@ -43,6 +75,11 @@ class _JoinScreenState extends State<JoinScreen> {
 
     return Scaffold(
       appBar: DiceAppBar(),
+      // endDrawer: Drawer(
+      //   child: Column(
+      //     children: [Text("Hi"), Text("Hello")],
+      //   ),
+      // ),
       body: Column(
         children: [
           SizedBox(height: screenSize.height * 0.05, width: screenSize.width),
@@ -107,24 +144,7 @@ class _JoinScreenState extends State<JoinScreen> {
                     );
                     return;
                   }
-                  if (!await joinRoom(myController.text)) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "Room doesn't exist!",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        duration: Duration(seconds: 2),
-                        backgroundColor: Colors.black,
-                      ),
-                    );
-                    return;
-                  }
-                  await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => RoomScreen(myController.text)));
-                  Navigator.pop(context);
+                  await joinRoom(myController.text);
                 }),
           ),
           SizedBox(

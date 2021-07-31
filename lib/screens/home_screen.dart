@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:dice/screens/loading_screen.dart';
 import 'package:dice/screens/room_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:dice/utils/cookie_manager.dart';
@@ -11,6 +12,8 @@ import 'package:dice/utils/firestore_adapter.dart';
 import 'package:dice/utils/firestore_room_manager.dart';
 
 class HomeScreen extends StatefulWidget {
+  static const String route = "/home";
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -18,7 +21,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
   Random random = Random();
-  RoomManager roomManager = RoomManager();
 
   Future<String> getName(BuildContext context) async {
     String name = CookieManager.getCookie("name");
@@ -38,17 +40,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> createRoom(BuildContext context) async {
     String name = await getName(context);
-    String roomCode = await roomManager.createRoom(name);
+    if (name.length == 0) {
+      return;
+    }
+    String roomCode = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                LoadingScreen(LoadingAction.CreateGame, name)));
+
     await Navigator.push(
         context, MaterialPageRoute(builder: (context) => RoomScreen(roomCode)));
   }
 
   Future<void> putPlayerInRoom(String roomCode) async {
-    if (!await roomManager.docExists("games", roomCode)) {
+    if (!await RoomManager.instance.docExists("games", roomCode)) {
       return;
     }
 
-    if (!(await roomManager.getRoomData(roomCode))["gameStarted"]) {
+    if (!(await RoomManager.instance.getRoomData(roomCode))["gameStarted"]) {
       Navigator.push(context,
           MaterialPageRoute(builder: (context) => RoomScreen(roomCode)));
     }
