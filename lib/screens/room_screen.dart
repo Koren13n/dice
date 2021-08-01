@@ -82,18 +82,6 @@ class _RoomScreenState extends State<RoomScreen> {
         });
   }
 
-  void startGame(String roomCode) {
-    RoomManager.instance.startGame(roomCode, 0);
-  }
-
-  void leaveRoom(String roomCode, String name) async {
-    FirebaseFirestore.instance
-        .collection("games/$roomCode/players")
-        .doc(name)
-        .delete();
-    Navigator.pop(context);
-  }
-
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;
@@ -182,7 +170,10 @@ class _RoomScreenState extends State<RoomScreen> {
                           height: screenSize.height * 0.1,
                           width: screenSize.width * buttonsWidth,
                           child: ElevatedButton(
-                            onPressed: () => leaveRoom(roomCode, name),
+                            onPressed: () {
+                              RoomManager.instance.leaveRoom(roomCode, name);
+                              Navigator.pop(context);
+                            },
                             child: Text(
                               "Leave Room",
                               style: TextStyle(fontSize: 36),

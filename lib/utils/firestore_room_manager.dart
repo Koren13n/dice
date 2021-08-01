@@ -24,6 +24,25 @@ class RoomManager {
     return doc.exists;
   }
 
+  void leaveRoom(String roomCode, String name) async {
+    List<Player> roomPlayers = await getRoomPlayers(roomCode);
+    roomPlayers.removeWhere((player) => player.name == name);
+    FirebaseFirestore.instance
+        .collection("games/$roomCode/players")
+        .doc(name)
+        .delete();
+    // Delete the room if empty
+    if (roomPlayers.isEmpty) {
+      FirebaseFirestore.instance.collection("games").doc(roomCode).delete();
+      return;
+    }
+
+    Player newAdmin = roomPlayers[0];
+    newAdmin.isAdmin = true;
+    firestoreAdapter.updateDocument(
+        "games/$roomCode/players", newAdmin.name, newAdmin.toJson());
+  }
+
   Future<List<Player>> getRoomPlayers(String roomCode) async {
     List<Player> players = [];
     QuerySnapshot query =
