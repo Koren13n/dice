@@ -6,6 +6,12 @@ import 'package:flutter/material.dart';
 class FirestorePlayersFetcher {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
 
+  static final FirestorePlayersFetcher _singleton = FirestorePlayersFetcher._();
+
+  static FirestorePlayersFetcher get instance => _singleton;
+
+  FirestorePlayersFetcher._();
+
   Stream<Map<String, dynamic>> getPlayersStreamFromFirestore(String roomCode) {
     return firestoreAdapter
         .getCollectionStream("games/$roomCode/players")

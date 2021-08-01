@@ -5,7 +5,12 @@ import 'package:dice/utils/cookie_manager.dart';
 import 'package:dice/utils/game.dart';
 import 'package:dice/utils/player.dart';
 
-enum AddPlayerResult { Success, RoomDoesntExist, PlayerAlreadyInRoom }
+enum AddPlayerResult {
+  Success,
+  RoomDoesntExist,
+  PlayerAlreadyInRoom,
+  GameStarted
+}
 
 class RoomManager {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
@@ -54,7 +59,6 @@ class RoomManager {
   }
 
   Future<Map<String, dynamic>> getRoomData(String roomCode) async {
-    print(roomCode);
     DocumentSnapshot metadata =
         await firestoreAdapter.getDocument("games", roomCode);
     return metadata.data();
@@ -88,6 +92,11 @@ class RoomManager {
       if (player.name == playerName) {
         return AddPlayerResult.PlayerAlreadyInRoom;
       }
+    }
+
+    Game game = Game.fromJson(await getRoomData(roomCode));
+    if (game.gameStarted) {
+      return AddPlayerResult.GameStarted;
     }
 
     await firestoreAdapter.updateDocument("games/$roomCode/players", playerName,

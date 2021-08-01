@@ -33,32 +33,30 @@ class _JoinScreenState extends State<JoinScreen> {
     return name;
   }
 
+  void showSnackbar(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(
+        text,
+        style: TextStyle(color: Colors.white),
+      ),
+      duration: Duration(seconds: 2),
+      backgroundColor: Colors.black,
+    ));
+  }
+
   Future<void> joinRoom(String roomCode) async {
     switch (await RoomManager.instance.addPlayerToRoom(roomCode, name)) {
       case AddPlayerResult.RoomDoesntExist:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Room doesn't exist!",
-              style: TextStyle(color: Colors.white),
-            ),
-            duration: Duration(seconds: 2),
-            backgroundColor: Colors.black,
-          ),
-        );
+        showSnackbar("Room doesn't exist!");
         return;
 
       case AddPlayerResult.PlayerAlreadyInRoom:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "A player with the same name as yours is already in the room.",
-              style: TextStyle(color: Colors.white),
-            ),
-            duration: Duration(seconds: 2),
-            backgroundColor: Colors.black,
-          ),
-        );
+        showSnackbar(
+            "A player with the same name as yours is already in the room.");
+        return;
+
+      case AddPlayerResult.GameStarted:
+        showSnackbar("The game in this room has already started");
         return;
 
       case AddPlayerResult.Success:

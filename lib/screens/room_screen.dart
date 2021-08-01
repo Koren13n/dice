@@ -21,10 +21,6 @@ class RoomScreen extends StatefulWidget {
 
 class _RoomScreenState extends State<RoomScreen> {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
-  final FirestorePlayersFetcher firestorePlayersFetcher =
-      FirestorePlayersFetcher();
-  bool isAdmin = true;
-  bool firstLoad = true;
   String diceCount = "6";
 
   Future<void> _displayTextInputDialog(BuildContext context) async {
@@ -107,8 +103,8 @@ class _RoomScreenState extends State<RoomScreen> {
         Expanded(
           child: Container(
             child: StreamBuilder(
-                stream: firestorePlayersFetcher
-                    .getPlayersStreamFromFirestore(this.widget.roomCode),
+                stream: FirestorePlayersFetcher.instance
+                    .getPlayersStreamFromFirestore(roomCode),
                 builder: (context, playersSnapshot) {
                   return StreamBuilder(
                       stream: FirestoreGameFetcher.instance
@@ -118,13 +114,6 @@ class _RoomScreenState extends State<RoomScreen> {
                         Game game = Game.fromJson(roomSnapshot.data);
                         List<Widget> columnWidgets = [];
                         Player currentPlayer;
-
-                        if (firstLoad && game.gameStarted) {
-                          return Text("Game Already Started",
-                              style: TextStyle(fontSize: 26));
-                        }
-
-                        firstLoad = false;
 
                         for (var player in players) {
                           columnWidgets.add(Text(
