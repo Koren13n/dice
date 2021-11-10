@@ -53,17 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
         context, MaterialPageRoute(builder: (context) => RoomScreen(roomCode)));
   }
 
-  Future<void> putPlayerInRoom(String roomCode) async {
-    if (!await RoomManager.instance.docExists("games", roomCode)) {
-      return;
-    }
-
-    if (!(await RoomManager.instance.getRoomData(roomCode))["gameStarted"]) {
-      Navigator.push(context,
-          MaterialPageRoute(builder: (context) => RoomScreen(roomCode)));
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     Size screenSize = MediaQuery.of(context).size;

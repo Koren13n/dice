@@ -22,8 +22,10 @@ class RoomScreen extends StatefulWidget {
 class _RoomScreenState extends State<RoomScreen> {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
   String diceCount = "6";
+  bool gameStarted = false;
 
-  Future<void> _displayTextInputDialog(BuildContext context) async {
+  Future<void> _displayTextInputDialog(
+      BuildContext context, Player currentPlayer) async {
     return showDialog(
         context: context,
         builder: (context) {
@@ -66,8 +68,8 @@ class _RoomScreenState extends State<RoomScreen> {
                   child: Text('OK'),
                   onPressed: () {
                     setState(() {
-                      RoomManager.instance.startGame(
-                          this.widget.roomCode, int.parse(diceCount));
+                      RoomManager.instance.rollPlayersDice();
+                      RoomManager.instance.startGame(int.parse(diceCount));
                       Navigator.pushNamed(context, GameRoom.route);
                     });
                   },
@@ -85,6 +87,7 @@ class _RoomScreenState extends State<RoomScreen> {
 
     String name = CookieManager.getCookie("name");
     final String roomCode = this.widget.roomCode;
+    List<Player> players = [];
 
     return Scaffold(
         body: Center(
@@ -100,93 +103,97 @@ class _RoomScreenState extends State<RoomScreen> {
         SizedBox(
           height: screenSize.height * 0.03,
         ),
-        Expanded(
-          child: Container(
-            child: StreamBuilder(
-                stream: FirestorePlayersFetcher.instance
-                    .getPlayersStreamFromFirestore(roomCode),
-                builder: (context, playersSnapshot) {
-                  return StreamBuilder(
-                      stream: FirestoreGameFetcher.instance
-                          .getGameStreamFromFirestore(roomCode),
-                      builder: (context, roomSnapshot) {
-                        List<Player> players = playersSnapshot.data["players"];
-                        Game game = Game.fromJson(roomSnapshot.data);
-                        List<Widget> columnWidgets = [];
-                        Player currentPlayer;
+        Container(
+          child: StreamBuilder(
+              stream: getGameStreamFromFirestore(roomCode),
+              builder: (context, roomSnapshot) {
+                if (roomSnapshot.data == null) {
+                  return SizedBox(
+                    height: screenSize.height * 0.1,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 5,
+                    ),
+                  );
+                }
+                Game game = Game.fromJson(roomSnapshot.data);
+                RoomManager.instance.updateGame(game);
+                List<Widget> columnWidgets = [];
+                Player currentPlayer;
 
-                        for (var player in players) {
-                          columnWidgets.add(Text(
-                            player.name,
-                            style: TextStyle(fontSize: 26),
-                          ));
-                          columnWidgets
-                              .add(SizedBox(height: screenSize.height * 0.005));
+                // Create a list of texts with all of the players names
+                for (var player in game.players) {
+                  columnWidgets.add(Text(
+                    player.name,
+                    style: TextStyle(fontSize: 26),
+                  ));
+                  columnWidgets
+                      .add(SizedBox(height: screenSize.height * 0.005));
 
-                          if (player.name == name) {
-                            currentPlayer = player;
-                          }
-                        }
+                  if (player.name == name) {
+                    currentPlayer = player;
+                  }
+                }
 
-                        columnWidgets.add(Expanded(child: SizedBox()));
+                columnWidgets.add(Expanded(child: SizedBox()));
 
-                        // Add the start game button for the admin
-                        if (currentPlayer?.isAdmin ?? false) {
-                          columnWidgets.add(Container(
-                            height: screenSize.height * 0.1,
-                            width: screenSize.width * buttonsWidth,
-                            child: ElevatedButton(
-                              onPressed: () => _displayTextInputDialog(context),
-                              child: Text(
-                                "Start Game",
-                                style: TextStyle(fontSize: 36),
-                              ),
-                              style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.all<Color>(
-                                        Colors.purple[500]),
-                              ),
-                            ),
-                          ));
-                        }
+                // Add the start game button for the admin
+                if (currentPlayer?.isAdmin ?? false) {
+                  columnWidgets.add(Container(
+                    height: screenSize.height * 0.1,
+                    width: screenSize.width * buttonsWidth,
+                    child: ElevatedButton(
+                      onPressed: () =>
+                          _displayTextInputDialog(context, currentPlayer),
+                      child: Text(
+                        "Start Game",
+                        style: TextStyle(fontSize: 36),
+                      ),
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.all<Color>(
+                            Colors.purple[500]),
+                      ),
+                    ),
+                  ));
+                }
 
-                        columnWidgets.add(SizedBox(
-                          height: screenSize.height * 0.02,
-                        ));
+                columnWidgets.add(SizedBox(
+                  height: screenSize.height * 0.02,
+                ));
 
-                        // Add the leave room button
-                        columnWidgets.add(Container(
-                          height: screenSize.height * 0.1,
-                          width: screenSize.width * buttonsWidth,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              RoomManager.instance.leaveRoom(roomCode, name);
-                              Navigator.pop(context);
-                            },
-                            child: Text(
-                              "Leave Room",
-                              style: TextStyle(fontSize: 36),
-                            ),
-                            style: ButtonStyle(
-                              backgroundColor: MaterialStateProperty.all<Color>(
-                                  Colors.purple[500]),
-                            ),
-                          ),
-                        ));
+                // Add the leave room button
+                columnWidgets.add(Container(
+                  height: screenSize.height * 0.1,
+                  width: screenSize.width * buttonsWidth,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      RoomManager.instance.leaveRoom(currentPlayer);
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      "Leave Room",
+                      style: TextStyle(fontSize: 36),
+                    ),
+                    style: ButtonStyle(
+                      backgroundColor:
+                          MaterialStateProperty.all<Color>(Colors.purple[500]),
+                    ),
+                  ),
+                ));
 
-                        // Add some spacing before the end of the screen
-                        columnWidgets.add(SizedBox(
-                          height: screenSize.height * 0.02,
-                        ));
+                // Add some spacing before the end of the screen
+                columnWidgets.add(SizedBox(
+                  height: screenSize.height * 0.02,
+                ));
 
-                        if (game.gameStarted) {
-                          Navigator.pushNamed(context, GameRoom.route);
-                        }
+                if (game.gameStarted && !gameStarted) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    Navigator.pushNamed(context, GameRoom.route);
+                  });
+                  gameStarted = true;
+                }
 
-                        return Column(children: columnWidgets);
-                      });
-                }),
-          ),
+                return Expanded(child: Column(children: columnWidgets));
+              }),
         )
       ]),
     ));

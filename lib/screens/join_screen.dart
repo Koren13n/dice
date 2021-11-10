@@ -60,8 +60,7 @@ class _JoinScreenState extends State<JoinScreen> {
         return;
 
       case AddPlayerResult.Success:
-        await Navigator.push(context,
-            MaterialPageRoute(builder: (context) => RoomScreen(roomCode)));
+        await Navigator.pushNamed(context, RoomScreen.route);
         Navigator.pop(context);
     }
   }

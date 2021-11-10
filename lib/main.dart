@@ -1,4 +1,9 @@
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dice/screens/game_room.dart';
+import 'package:dice/utils/cookie_manager.dart';
+import 'package:dice/utils/game.dart';
 import 'package:flutter/material.dart';
 import 'package:dice/screens/home_screen.dart';
 import 'package:dice/screens/join_screen.dart';
@@ -73,16 +78,13 @@ class MyApp extends StatelessWidget {
         HomeScreen.route: (context) => HomeScreen(),
         NameScreen.route: (context) => NameScreen(),
         JoinScreen.route: (context) => JoinScreen(),
-        RoomScreen.route: (context) => RoomScreen((ModalRoute.of(context)
-            .settings
-            .arguments as Map<String, dynamic>)["room_code"]),
-        GameRoom.route: (context) => GameRoom()
+        RoomScreen.route: (context) =>
+            RoomScreen(CookieManager.getCookie("room")),
+        GameRoom.route: (context) => GameRoom(CookieManager.getCookie("room"))
       },
       onGenerateRoute: (settings) {
-        print(settings.name);
         final settingsUri = Uri.parse(settings.name);
 
-        print(settingsUri);
         if (settingsUri.pathSegments.length == 0) {
           return MaterialPageRoute(builder: (context) => HomeScreen());
         }

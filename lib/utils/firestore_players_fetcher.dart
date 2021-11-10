@@ -3,28 +3,20 @@ import 'package:dice/utils/firestore_adapter.dart';
 import 'package:dice/utils/player.dart';
 import 'package:flutter/material.dart';
 
-class FirestorePlayersFetcher {
+Stream<Map<String, dynamic>> getPlayersStreamFromFirestore(String roomCode) {
   FirestoreAdapter firestoreAdapter = FirestoreAdapter();
+  return firestoreAdapter
+      .getCollectionStream("games/$roomCode/players")
+      .asBroadcastStream()
+      .map((snapshot) {
+    List<Player> players = [];
 
-  static final FirestorePlayersFetcher _singleton = FirestorePlayersFetcher._();
+    for (DocumentSnapshot document in snapshot?.docs ?? []) {
+      players.add(Player.fromJson(document.data()));
+    }
 
-  static FirestorePlayersFetcher get instance => _singleton;
+    Map<String, dynamic> roomData = {"players": players};
 
-  FirestorePlayersFetcher._();
-
-  Stream<Map<String, dynamic>> getPlayersStreamFromFirestore(String roomCode) {
-    return firestoreAdapter
-        .getCollectionStream("games/$roomCode/players")
-        .map((snapshot) {
-      List<Player> players = [];
-
-      for (DocumentSnapshot document in snapshot?.docs ?? []) {
-        players.add(Player.fromJson(document.data()));
-      }
-
-      Map<String, dynamic> roomData = {"players": players};
-
-      return roomData;
-    });
-  }
+    return roomData;
+  });
 }
