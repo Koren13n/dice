@@ -1,9 +1,7 @@
 import 'dart:io';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dice/screens/game_room.dart';
 import 'package:dice/utils/cookie_manager.dart';
-import 'package:dice/utils/game.dart';
 import 'package:flutter/material.dart';
 import 'package:dice/screens/home_screen.dart';
 import 'package:dice/screens/join_screen.dart';

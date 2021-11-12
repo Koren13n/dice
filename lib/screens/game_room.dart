@@ -33,14 +33,50 @@ class _GameRoomState extends State<GameRoom> {
   int lieDiceCount = 1;
   int totalDiceCount = 0;
   String lieUser = "";
+  bool liePressed = false;
+  Game previousGameState = null;
   final myController = TextEditingController();
+
+  Future<void> _displayPreviousDiceNums(
+      BuildContext context, Game previousGame) async {
+    List<Column> playersDiceNums = [];
+
+    for (Player player in previousGame.players) {
+      List<Text> playerDiceNumsStrings = [];
+      playerDiceNumsStrings.add(Text(player.name));
+      player.dice.map(
+          (diceNum) => playerDiceNumsStrings.add(Text(diceNum.toString())));
+      playersDiceNums.add(Column(children: playerDiceNumsStrings));
+    }
+
+    GridView playersDiceGrid =
+        GridView.count(crossAxisCount: 3, children: playersDiceNums);
+
+    return AlertDialog(
+      title: Text('Who lied?'),
+      content: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [playersDiceGrid],
+      ),
+      actions: <Widget>[
+        TextButton(
+          style: ButtonStyle(),
+          child: Text('OK'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        )
+      ],
+    );
+  }
 
   Future<void> _displayLieDialog(
       BuildContext context, Player currentPlayer) async {
     Size screenSize = MediaQuery.of(context).size;
     // Get a list of dropdown menu items with the player names
     List<String> playerNames = RoomManager.instance.getPlayerNames();
-    playerNames.remove(currentPlayer);
+    playerNames.remove(currentPlayer.name);
     List<DropdownMenuItem<String>> playerNamesDropdowns =
         playerNames.map((name) {
       return DropdownMenuItem<String>(
@@ -51,18 +87,7 @@ class _GameRoomState extends State<GameRoom> {
         ),
       );
     }).toList();
-    lieUser = currentPlayer.name;
-
-    List<DropdownMenuItem<String>> diceIcons =
-        List<int>.generate(6, (i) => i + 1)
-            .map<DropdownMenuItem<String>>((int value) {
-      return DropdownMenuItem<String>(
-        value: value.toString(),
-        child: Text(value.toString()),
-      );
-    }).toList();
-
-    int a = 5;
+    lieUser = playerNames[0];
 
     return showDialog(
         context: context,
@@ -131,6 +156,7 @@ class _GameRoomState extends State<GameRoom> {
                   child: Text('OK'),
                   onPressed: () {
                     setState(() {
+                      liePressed = true;
                       Navigator.pop(context);
                     });
                   },
@@ -162,17 +188,33 @@ class _GameRoomState extends State<GameRoom> {
                 if (gameSnapshot.data == null) {
                   return CircularProgressIndicator();
                 }
+
                 Game game = Game.fromJson(gameSnapshot.data);
+
                 RoomManager.instance.updateGame(game);
                 Player currentPlayer;
                 players = game.players;
                 List<Widget> playersText = [];
 
+                int newTotalDiceCount = 0;
                 for (Player player in game.players) {
                   if (player.name == name) {
                     currentPlayer = player;
                   }
-                  totalDiceCount += player.dice.length;
+                  newTotalDiceCount += player.dice.length;
+                }
+
+                // On the first run we just initialize
+                if (newTotalDiceCount != totalDiceCount &&
+                    previousGameState == null) {
+                  previousGameState = game;
+                  totalDiceCount = newTotalDiceCount;
+                }
+                // a dice was removed
+                else if (newTotalDiceCount != totalDiceCount) {
+                  // TODO: Show the prevoius counts
+                  previousGameState = game;
+                  totalDiceCount = newTotalDiceCount;
                 }
 
                 List<Widget> dicePicturs = currentPlayer.dice.map((diceNum) {
@@ -247,7 +289,8 @@ class _GameRoomState extends State<GameRoom> {
                           child: ElevatedButton(
                             onPressed: () async {
                               await _displayLieDialog(context, currentPlayer);
-                              if (lieUser != "") {
+                              if (liePressed && lieUser != "") {
+                                liePressed = false;
                                 if (await RoomManager.instance.handleLie(
                                     currentPlayer.name,
                                     lieUser,

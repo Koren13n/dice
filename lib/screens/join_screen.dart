@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dice/screens/loading_screen.dart';
 import 'package:dice/utils/app_bar.dart';
 import 'package:dice/utils/cookie_manager.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +46,15 @@ class _JoinScreenState extends State<JoinScreen> {
   }
 
   Future<void> joinRoom(String roomCode) async {
-    switch (await RoomManager.instance.addPlayerToRoom(roomCode, name)) {
+    AddPlayerResult result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => LoadingScreen(
+                  LoadingAction.JoinGame,
+                  name,
+                  roomCode: roomCode,
+                )));
+    switch (result) {
       case AddPlayerResult.RoomDoesntExist:
         showSnackbar("Room doesn't exist!");
         return;
