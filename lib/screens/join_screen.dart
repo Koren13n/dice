@@ -46,14 +46,16 @@ class _JoinScreenState extends State<JoinScreen> {
   }
 
   Future<void> joinRoom(String roomCode) async {
-    AddPlayerResult result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => LoadingScreen(
-                  LoadingAction.JoinGame,
-                  name,
-                  roomCode: roomCode,
-                )));
+    // AddPlayerResult result = await Navigator.push(
+    //     context,
+    //     MaterialPageRoute(
+    //         builder: (context) => LoadingScreen(
+    //               LoadingAction.JoinGame,
+    //               name,
+    //               roomCode: roomCode,
+    //             )));
+    AddPlayerResult result =
+        await RoomManager.instance.addPlayerToRoom(roomCode, name);
     switch (result) {
       case AddPlayerResult.RoomDoesntExist:
         showSnackbar("Room doesn't exist!");
@@ -69,8 +71,7 @@ class _JoinScreenState extends State<JoinScreen> {
         return;
 
       case AddPlayerResult.Success:
-        await Navigator.pushNamed(context, RoomScreen.route);
-        Navigator.pop(context);
+        Navigator.pushNamed(context, RoomScreen.route);
     }
   }
 

@@ -62,6 +62,15 @@ class RoomManager {
     return _game.players.map((player) => player.name).toList();
   }
 
+  List<String> getActivePlayerNames() {
+    return _game.players
+        .where((player) => player.diceCount > 0)
+        .map((player) => player.name)
+        .toList();
+  }
+
+  /* Dice type given in range 1-6 but DB stores range 0-5,
+    so when we check, we should check diceType - 1 */
   Future<bool> handleLie(String currentPlayerName, String lyingPlayerName,
       int diceType, int diceCount) async {
     List<int> allDiceCount = List.generate(6, (index) => 0);
@@ -78,23 +87,15 @@ class RoomManager {
     }
     // Lie wasn't true, remove from the current player a dice.
     if (allDiceCount[diceType - 1] >= diceCount) {
-      _game.players.forEach((player) {
-        if (player.name == currentPlayerName) {
-          if (player.diceCount > 0) {
-            player.diceCount--;
-          }
-        }
-      });
+      _game.players
+          .singleWhere((player) => player.name == currentPlayerName)
+          .diceCount--;
     }
     // Lie was true, remove from the lying player dice.
     else {
-      _game.players.forEach((player) {
-        if (player.name == lyingPlayerName) {
-          if (player.diceCount > 0) {
-            player.diceCount--;
-          }
-        }
-      });
+      _game.players
+          .singleWhere((player) => player.name == lyingPlayerName)
+          .diceCount--;
     }
     await rollPlayersDice();
     return true;

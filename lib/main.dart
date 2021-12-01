@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:dice/screens/game_room.dart';
 import 'package:dice/utils/cookie_manager.dart';
 import 'package:flutter/material.dart';

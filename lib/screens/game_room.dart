@@ -28,6 +28,8 @@ class GameRoom extends StatefulWidget {
   _GameRoomState createState() => _GameRoomState();
 }
 
+final String noLieUser = "Choose Lier";
+
 class _GameRoomState extends State<GameRoom> {
   int lieDiceNum = 1;
   int lieDiceCount = 1;
@@ -39,43 +41,57 @@ class _GameRoomState extends State<GameRoom> {
 
   Future<void> _displayPreviousDiceNums(
       BuildContext context, Game previousGame) async {
-    List<Column> playersDiceNums = [];
+    Size screenSize = MediaQuery.of(context).size;
+    List<Widget> playersDiceNums = [];
 
     for (Player player in previousGame.players) {
       List<Text> playerDiceNumsStrings = [];
       playerDiceNumsStrings.add(Text(player.name));
-      player.dice.map(
-          (diceNum) => playerDiceNumsStrings.add(Text(diceNum.toString())));
-      playersDiceNums.add(Column(children: playerDiceNumsStrings));
+      player.dice.forEach((diceNum) =>
+          playerDiceNumsStrings.add(Text((diceNum + 1).toString())));
+      playersDiceNums.add(Container(
+        child: Column(children: playerDiceNumsStrings),
+        width: screenSize.width * 0.2,
+        height: screenSize.height * 0.35,
+      ));
     }
 
     GridView playersDiceGrid =
         GridView.count(crossAxisCount: 3, children: playersDiceNums);
-
-    return AlertDialog(
-      title: Text('Who lied?'),
-      content: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [playersDiceGrid],
-      ),
-      actions: <Widget>[
-        TextButton(
-          style: ButtonStyle(),
-          child: Text('OK'),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        )
-      ],
-    );
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Players\' Dice'),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: screenSize.height * 0.7,
+                  width: screenSize.width * 0.7,
+                  child: playersDiceGrid,
+                )
+              ],
+            ),
+            actions: <Widget>[
+              TextButton(
+                style: ButtonStyle(),
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              )
+            ],
+          );
+        });
   }
 
   Future<void> _displayLieDialog(
       BuildContext context, Player currentPlayer) async {
     Size screenSize = MediaQuery.of(context).size;
     // Get a list of dropdown menu items with the player names
-    List<String> playerNames = RoomManager.instance.getPlayerNames();
+    List<String> playerNames = RoomManager.instance.getActivePlayerNames();
     playerNames.remove(currentPlayer.name);
     List<DropdownMenuItem<String>> playerNamesDropdowns =
         playerNames.map((name) {
@@ -87,7 +103,13 @@ class _GameRoomState extends State<GameRoom> {
         ),
       );
     }).toList();
-    lieUser = playerNames[0];
+    playerNamesDropdowns.add(DropdownMenuItem<String>(
+        value: noLieUser,
+        child: Text(
+          noLieUser,
+          style: TextStyle(color: Colors.white),
+        )));
+    lieUser = noLieUser;
 
     return showDialog(
         context: context,
@@ -146,7 +168,7 @@ class _GameRoomState extends State<GameRoom> {
                   child: Text('CANCEL'),
                   onPressed: () {
                     setState(() {
-                      lieUser = "";
+                      lieUser = noLieUser;
                       Navigator.pop(context);
                     });
                   },
@@ -155,9 +177,26 @@ class _GameRoomState extends State<GameRoom> {
                   style: ButtonStyle(),
                   child: Text('OK'),
                   onPressed: () {
-                    setState(() {
-                      liePressed = true;
-                      Navigator.pop(context);
+                    setState(() async {
+                      if (lieUser == noLieUser) {
+                        await showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                content: Text("Please choose lier"),
+                                actions: [
+                                  TextButton(
+                                      child: Text("OK"),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      })
+                                ],
+                              );
+                            });
+                      } else {
+                        liePressed = true;
+                        Navigator.pop(context);
+                      }
                     });
                   },
                 )
@@ -207,13 +246,17 @@ class _GameRoomState extends State<GameRoom> {
                 // On the first run we just initialize
                 if (newTotalDiceCount != totalDiceCount &&
                     previousGameState == null) {
-                  previousGameState = game;
+                  previousGameState = Game.fromJson(game.toJson());
                   totalDiceCount = newTotalDiceCount;
                 }
                 // a dice was removed
                 else if (newTotalDiceCount != totalDiceCount) {
                   // TODO: Show the prevoius counts
-                  previousGameState = game;
+                  // Future.delayed(
+                  //     Duration.zero,
+                  //     () async => await _displayPreviousDiceNums(
+                  //         context, previousGameState));
+                  previousGameState = Game.fromJson(game.toJson());
                   totalDiceCount = newTotalDiceCount;
                 }
 
@@ -287,21 +330,20 @@ class _GameRoomState extends State<GameRoom> {
                           height: screenSize.height * 0.1,
                           width: screenSize.width * 0.48,
                           child: ElevatedButton(
-                            onPressed: () async {
-                              await _displayLieDialog(context, currentPlayer);
-                              if (liePressed && lieUser != "") {
-                                liePressed = false;
-                                if (await RoomManager.instance.handleLie(
-                                    currentPlayer.name,
-                                    lieUser,
-                                    lieDiceNum,
-                                    lieDiceCount)) {
-                                  print("You were right!");
-                                } else {
-                                  print("You were wrong!");
-                                }
-                              }
-                            },
+                            onPressed: currentPlayer.diceCount == 0
+                                ? null
+                                : () async {
+                                    await _displayLieDialog(
+                                        context, currentPlayer);
+                                    if (liePressed && lieUser != noLieUser) {
+                                      liePressed = false;
+                                      await RoomManager.instance.handleLie(
+                                          currentPlayer.name,
+                                          lieUser,
+                                          lieDiceNum,
+                                          lieDiceCount);
+                                    }
+                                  },
                             child: Text(
                               "Lie!",
                               style: TextStyle(fontSize: 36),
@@ -317,7 +359,10 @@ class _GameRoomState extends State<GameRoom> {
                           height: screenSize.height * 0.1,
                           width: screenSize.width * 0.48,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              RoomManager.instance.leaveRoom(currentPlayer);
+                              Navigator.popAndPushNamed(context, '/');
+                            },
                             child: Text(
                               "Leave Room",
                               style: TextStyle(fontSize: 36),
